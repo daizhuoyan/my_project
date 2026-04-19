@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>待办清单 · 深色/浅色一键切换</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 全局 CSS 变量（核心换肤） */
+        :root {
+            --bg-start: #1a2a3a;
+            --bg-end: #0f1a24;
+            --card-bg: rgba(18, 28, 35, 0.9);
+            --text-main: #eef4ff;
+            --text-light: #cbd5e6;
+            --border: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(10, 20, 28, 0.7);
+            --btn-bg: #2f7d8f;
+            --btn-hover: #3c95aa;
+            --danger-bg: #b1432f;
+            --danger-hover: #c35a44;
+            --placeholder: #8a9bb0;
+        }
+
+        /* 浅色模式 —— 只需覆盖变量 */
+        body.light {
+            --bg-start: #e0f2fe;
+            --bg-end: #b8e1fc;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #1e2f3a;
+            --text-light: #2c4c5c;
+            --border: rgba(0, 0, 0, 0.08);
+            --input-bg: white;
+            --btn-bg: #2c7a8c;
+            --btn-hover: #1f5e6e;
+            --danger-bg: #c23d22;
+            --danger-hover: #9b2f12;
+            --placeholder: #6b7c93;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(145deg, var(--bg-start), var(--bg-end));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            transition: background 0.3s ease;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            padding: 1.8rem;
+            width: 100%;
+            max-width: 550px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #themeToggle {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 2rem;
+            padding: 0.3rem 1rem;
+            cursor: pointer;
+            color: var(--text-main);
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .task-count {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .todo-input {
+            flex: 1;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            padding: 0.7rem 1rem;
+            border-radius: 1.5rem;
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .todo-input::placeholder {
+            color: var(--placeholder);
+        }
+
+        button {
+            border: none;
+            padding: 0 1.2rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-add {
+            background: var(--btn-bg);
+            color: white;
+        }
+        .btn-add:hover {
+            background: var(--btn-hover);
+        }
+
+        .todo-list {
+            list-style: none;
+            margin: 1rem 0;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .todo-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 1.2rem;
+            padding: 0.6rem 1rem;
+            margin-bottom: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+
+        .todo-text {
+            flex: 1;
+            color: var(--text-main);
+            font-weight: 500;
+            word-break: break-word;
+            cursor: pointer;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 4px 8px;
+            border-radius: 1rem;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .delete-btn:hover {
+            color: #ff8a6c;
+        }
+
+        .clear-btn {
+            width: 100%;
+            background: var(--danger-bg);
+            color: white;
+            padding: 0.6rem;
+            margin-top: 0.5rem;
+        }
+        .clear-btn:hover {
+            background: var(--danger-hover);
+        }
+
+        .empty-msg {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="header">
+        <h1>✅ 待办清单</h1>
+        <button id="themeToggle">🌓 浅色模式</button>
+        <div class="task-count" id="taskCounter">0 项任务</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" class="todo-input" id="todoInput" placeholder="写个任务，比如「学 Git」...">
+        <button class="btn-add" id="addBtn">+ 新增</button>
+    </div>
+
+    <ul class="todo-list" id="todoList">
+        <li class="empty-msg">✨ 暂无待办，点击「新增」添加</li>
+    </ul>
+
+    <button class="clear-btn" id="clearBtn">🗑️ 清空所有事项</button>
+</div>
+
+<script>
+    // DOM 元素
+    const input = document.getElementById('todoInput');
+    const addBtn = document.getElementById('addBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const todoList = document.getElementById('todoList');
+    const taskCounter = document.getElementById('taskCounter');
+    const themeToggle = document.getElementById('themeToggle');
+
+    // ---------- 深色/浅色模式 ----------
+    function loadTheme() {
+        const saved = localStorage.getItem('todo_theme');
+        if (saved === 'light') {
+            document.body.classList.add('light');
+            themeToggle.innerHTML = '🌙 深色模式';
+        } else {
+            document.body.classList.remove('light');
+            themeToggle.innerHTML = '🌓 浅色模式';
+        }
+    }
+
+    themeToggle.addEventListener('click', () => {
+        const isLight = document.body.classList.toggle('light');
+        localStorage.setItem('todo_theme', isLight ? 'light' : 'dark');
+        themeToggle.innerHTML = isLight ? '🌙 深色模式' : '🌓 浅色模式';
+    });
+
+    // ---------- 待办数据管理 ----------
+    let todos = [];  // 存储 { id, text }
+
+    function saveToLocal() {
+        localStorage.setItem('todo_list', JSON.stringify(todos));
+    }
+
+    function loadFromLocal() {
+        const stored = localStorage.getItem('todo_list');
+        if (stored) {
+            todos = JSON.parse(stored);
+        } else {
+            todos = [];
+        }
+        render();
+    }
+
+    function render() {
+        // 清空列表，但保留 ul
+        todoList.innerHTML = '';
+        if (todos.length === 0) {
+            todoList.innerHTML = '<li class="empty-msg">📭 暂无待办，点击「新增」添加</li>';
+            taskCounter.innerText = '0 项任务';
+            return;
+        }
+
+        taskCounter.innerText = `${todos.length} 项任务`;
+        todos.forEach(todo => {
+            const li = document.createElement('li');
+            li.className = 'todo-item';
+            li.dataset.id = todo.id;
+
+            const span = document.createElement('span');
+            span.className = 'todo-text';
+            span.innerText = todo.text;
+
+            const actions = document.createElement('div');
+            actions.className = 'item-actions';
+
+            const editBtn = document.createElement('button');
+            editBtn.innerHTML = '✏️';
+            editBtn.className = 'icon-btn';
+            const delBtn = document.createElement('button');
+            delBtn.innerHTML = '🗑️';
+            delBtn.className = 'icon-btn delete-btn';
+
+            actions.appendChild(editBtn);
+            actions.appendChild(delBtn);
+            li.appendChild(span);
+            li.appendChild(actions);
+            todoList.appendChild(li);
+
+            // 编辑：点击后弹出修改（简单可靠）
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const newText = prompt('编辑待办事项', todo.text);
+                if (newText && newText.trim() !== '') {
+                    todo.text = newText.trim();
+                    saveToLocal();
+                    render();
+                }
+            });
+
+            // 删除
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                todos = todos.filter(t => t.id !== todo.id);
+                saveToLocal();
+                render();
+            });
+
+            // 双击文本也可编辑
+            span.addEventListener('dblclick', () => {
+                const newText = prompt('编辑待办', todo.text);
+                if (newText && newText.trim() !== '') {
+                    todo.text = newText.trim();
+                    saveToLocal();
+                    render();
+                }
+            });
+        });
+    }
+
+    // 新增待办
+    function addTodo() {
+        const text = input.value.trim();
+        if (text === '') {
+            alert('请输入待办内容');
+            return;
+        }
+        const newTodo = {
+            id: Date.now(),
+            text: text
+        };
+        todos.push(newTodo);
+        saveToLocal();
+        render();
+        input.value = '';
+        input.focus();
+    }
+
+    // 清空所有
+    function clearAll() {
+        if (todos.length === 0) return;
+        if (confirm('确定要清空所有待办事项吗？')) {
+            todos = [];
+            saveToLocal();
+            render();
+        }
+    }
+
+    // 绑定事件
+    addBtn.addEventListener('click', addTodo);
+    clearBtn.addEventListener('click', clearAll);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addTodo();
+    });
+
+    // 初始化
+    loadTheme();
+    loadFromLocal();
+</script>
+</body>
+</html>
